@@ -19,5 +19,5 @@ setup(
         "Operating System :: MacOS"
     ],
     url='https://github.com/pnwairfire/afconfig',
-    description='Utilities for working with datetime objects'
+    description='Utilities for application configuration'
 )

@@ -1,6 +1,6 @@
 # afconfig
 
-This package contains utilities for configurating applications.
+This package contains utilities for app configuration.
 
 ***This software is provided for research purposes only. Use at own risk.***
 
