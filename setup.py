@@ -19,5 +19,5 @@ setup(
         "Operating System :: MacOS"
     ],
     url='https://github.com/pnwairfire/afconfig',
-    description='Utilities for application configuration'
+    description='Utilities for app configuration'
 )
