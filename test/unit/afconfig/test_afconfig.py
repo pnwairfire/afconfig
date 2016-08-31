@@ -6,7 +6,7 @@ import configparser
 
 from py.test import raises
 
-from pyairfire.configuration import (
+from afconfig import (
     config_parser_to_dict,
     get_config_value,
     set_config_value,
