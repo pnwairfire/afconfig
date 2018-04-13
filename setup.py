@@ -2,6 +2,10 @@ from setuptools import setup, find_packages
 
 from afconfig import __version__
 
+test_requirements = []
+with open('requirements-test.txt') as f:
+    test_requirements = [r for r in f.read().splitlines()]
+
 setup(
     name='afconfig',
     version=__version__,
@@ -19,5 +23,6 @@ setup(
         "Operating System :: MacOS"
     ],
     url='https://github.com/pnwairfire/afconfig',
-    description='Utilities for app configuration'
+    description='Utilities for app configuration',
+    tests_require=test_requirements
 )
