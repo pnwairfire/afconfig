@@ -56,8 +56,10 @@ class TestGetConfigValue(object):
 
         # invalid config
         # fail_on_missing_key never comes into play if config is invalid
-        assert None == get_config_value("SDF", 's', fail_on_missing_key=True)
-        assert 1 == get_config_value("SDF", 's', fail_on_missing_key=True, default=1)
+        with raises(KeyError) as e:
+            get_config_value("SDF", 's', fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value("SDF", 's', fail_on_missing_key=True, default=1)
 
         # empty config
         with raises(KeyError) as e:
@@ -86,10 +88,19 @@ class TestGetConfigValue(object):
         with raises(KeyError) as e:
             get_config_value({}, 's', fail_on_missing_key=True, default=1)
 
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'aa', 'foo',
+                fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'aa', 'foo',
+                fail_on_missing_key=True, default=1)
+
         # fail_on_missing is ignored if value is there
-        assert 12 == get_config_value(config, 'c', fail_on_missing_key=True)
+        assert 12 == get_config_value(config, 'c',
+            fail_on_missing_key=True)
         # and default doesn't do anything in this case
-        assert 12 == get_config_value(config, 'c', fail_on_missing_key=True, default=1)
+        assert 12 == get_config_value(config, 'c',
+            fail_on_missing_key=True, default=1)
 
     def test_fail_on_invalid_config_option(self):
         # undefined config
@@ -131,6 +142,64 @@ class TestGetConfigValue(object):
         assert 12 == get_config_value(config, 'c', fail_on_invalid_config=True)
         # and default doesn't do anything in this case
         assert 12 == get_config_value(config, 'c', fail_on_invalid_config=True, default=1)
+
+    def test_fail_on_missing_keys_and_invalid_config_options(self):
+        # undefined config
+        with raises(KeyError) as e:
+            get_config_value(None, 's',
+                fail_on_missing_key=True, fail_on_invalid_config=True)
+
+        # invalid config
+        with raises(ConfigurationError) as e:
+            get_config_value("SDF", 's',
+                fail_on_missing_key=True, fail_on_invalid_config=True)
+        with raises(ConfigurationError) as e:
+            get_config_value("SDF", 's',
+                fail_on_missing_key=True, fail_on_invalid_config=True, default=1)
+
+        # empty config
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True,
+                fail_on_invalid_config=True)
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True,
+                fail_on_invalid_config=True, default=1)
+
+        config = {
+            'a': {
+                'aa': 'sdf',
+                'ab': 343
+            },
+            'b': {
+                'ba': 123,
+                'bb': 'sdfs',
+                'cc': {
+                    'ccc': "SDF"
+                }
+            },
+            'c': 12
+        }
+        with raises(KeyError) as e:
+            get_config_value(config, 's', fail_on_missing_key=True,
+                fail_on_invalid_config=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 's', fail_on_missing_key=True,
+                fail_on_invalid_config=True, default=1)
+
+        with raises(ConfigurationError) as e:
+            get_config_value(config, 'a', 'aa', 'foo',
+                fail_on_missing_key=True, fail_on_invalid_config=True)
+        with raises(ConfigurationError) as e:
+            get_config_value(config, 'a', 'aa', 'foo',
+                fail_on_missing_key=True, fail_on_invalid_config=True, default=1)
+
+        # fail_on_missing and fail_on_invalid_config are ignored if value is there
+        assert 12 == get_config_value(config, 'c',
+            fail_on_missing_key=True, fail_on_invalid_config=True)
+        # and default doesn't do anything in this case
+        assert 12 == get_config_value(config, 'c',
+            fail_on_missing_key=True, fail_on_invalid_config=True, default=1)
+
 
     def test_undefined_config(self):
         with raises(ConfigurationError) as e_info:
