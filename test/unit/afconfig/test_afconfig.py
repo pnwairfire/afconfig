@@ -11,10 +11,10 @@ from afconfig import (
     get_config_value,
     set_config_value,
     merge_configs,
-    NO_KEYS_ERR_MSG,
-    INVALID_CONFIG_ERR_MSG,
-    MISSING_KEYS_ERR_MSG,
-    CONFIG_CONFLICT,
+    GET_CONFIG_VALUE_ERR_MSG_NO_KEYS,
+    SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG,
+    SET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS,
+    MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT,
     ConfigurationError
 )
 
@@ -49,20 +49,113 @@ class TestConfigParserToDict(object):
 
 class TestGetConfigValue(object):
 
-    def test_no_config(self):
+    def test_fail_on_missing_key_option(self):
+        # undefined config
+        with raises(KeyError) as e:
+            get_config_value(None, 's', fail_on_missing_key=True)
+
+        # invalid config
+        # fail_on_missing_key never comes into play if config is invalid
+        assert None == get_config_value("SDF", 's', fail_on_missing_key=True)
+        assert 1 == get_config_value("SDF", 's', fail_on_missing_key=True, default=1)
+
+        # empty config
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True)
+        # fail even if default is specified
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True, default=1)
+
+        config = {
+            'a': {
+                'aa': 'sdf',
+                'ab': 343
+            },
+            'b': {
+                'ba': 123,
+                'bb': 'sdfs',
+                'cc': {
+                    'ccc': "SDF"
+                }
+            },
+            'c': 12
+        }
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True)
+        # fail even if default is specified
+        with raises(KeyError) as e:
+            get_config_value({}, 's', fail_on_missing_key=True, default=1)
+
+        # fail_on_missing is ignored if value is there
+        assert 12 == get_config_value(config, 'c', fail_on_missing_key=True)
+        # and default doesn't do anything in this case
+        assert 12 == get_config_value(config, 'c', fail_on_missing_key=True, default=1)
+
+    def test_fail_on_invalid_config_option(self):
+        # undefined config
+        get_config_value(None, 's', fail_on_invalid_config=True)
+
+        # invalid config
+        with raises(ConfigurationError) as e:
+            get_config_value("SDF", 's', fail_on_invalid_config=True)
+        with raises(ConfigurationError) as e:
+            get_config_value("SDF", 's', fail_on_invalid_config=True, default=1)
+
+        # empty config
+        assert None == get_config_value({}, 's', fail_on_invalid_config=True)
+        assert 1 == get_config_value({}, 's', fail_on_invalid_config=True, default=1)
+
+        config = {
+            'a': {
+                'aa': 'sdf',
+                'ab': 343
+            },
+            'b': {
+                'ba': 123,
+                'bb': 'sdfs',
+                'cc': {
+                    'ccc': "SDF"
+                }
+            },
+            'c': 12
+        }
+        assert None == get_config_value(config, 's', fail_on_invalid_config=True)
+        assert 1 == get_config_value(config, 's', fail_on_invalid_config=True, default=1)
+
+        with raises(ConfigurationError) as e:
+            get_config_value(config, 'a', 'aa', 'foo', fail_on_invalid_config=True)
+        with raises(ConfigurationError) as e:
+            get_config_value(config, 'a', 'aa', 'foo', fail_on_invalid_config=True, default=1)
+
+        # fail_on_missing is ignored if value is there
+        assert 12 == get_config_value(config, 'c', fail_on_invalid_config=True)
+        # and default doesn't do anything in this case
+        assert 12 == get_config_value(config, 'c', fail_on_invalid_config=True, default=1)
+
+    def test_undefined_config(self):
         with raises(ConfigurationError) as e_info:
             get_config_value(None)
-        assert e_info.value.args[0] == NO_KEYS_ERR_MSG
+        assert e_info.value.args[0] == GET_CONFIG_VALUE_ERR_MSG_NO_KEYS
 
         assert None == get_config_value(None, 's')
         assert None == get_config_value(None, 's', 'sdf')
         assert 1 == get_config_value(None, 's', default=1)
         assert 1 == get_config_value(None, 's', 'sdf', default=1)
 
+    def test_invalid_config(self):
+        with raises(ConfigurationError) as e_info:
+            get_config_value(123)
+        assert e_info.value.args[0] == GET_CONFIG_VALUE_ERR_MSG_NO_KEYS
+
+        assert None == get_config_value(123, 's')
+        assert None == get_config_value(123, 's', 'sdf')
+        assert 1 == get_config_value(123, 's', default=1)
+        assert 1 == get_config_value(123, 's', 'sdf', default=1)
+
     def test_empty_config(self):
         with raises(ConfigurationError) as e_info:
             get_config_value({})
-        assert e_info.value.args[0] == NO_KEYS_ERR_MSG
+        assert e_info.value.args[0] == GET_CONFIG_VALUE_ERR_MSG_NO_KEYS
 
         assert None == get_config_value({}, 's')
         assert None == get_config_value({}, 's', 'sdf')
@@ -87,7 +180,7 @@ class TestGetConfigValue(object):
 
         with raises(ConfigurationError) as e_info:
             get_config_value(config)
-        assert e_info.value.args[0] == NO_KEYS_ERR_MSG
+        assert e_info.value.args[0] == GET_CONFIG_VALUE_ERR_MSG_NO_KEYS
 
         assert None == get_config_value(config, 'z')
         assert None == get_config_value(config, 'z', 'b')
@@ -116,12 +209,12 @@ class TestSetConfigValue(object):
     def test_invalid_config(self):
         with raises(ConfigurationError) as e_info:
             set_config_value(12, 3, '123')
-        assert e_info.value.args[0] == INVALID_CONFIG_ERR_MSG
+        assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG
 
     def test_no_keys(self):
         with raises(ConfigurationError) as e_info:
             set_config_value({}, 32)
-        assert e_info.value.args[0] == MISSING_KEYS_ERR_MSG
+        assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS
 
     def test_basic(self):
         config = {}
@@ -147,24 +240,24 @@ class TestMergeConfigs(object):
     def test_invalid_configs(self):
         with raises(ConfigurationError) as e_info:
             merge_configs(12, {'a': 1})
-        assert e_info.value.args[0] == INVALID_CONFIG_ERR_MSG
+        assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG
 
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': 1}, 12)
-        assert e_info.value.args[0] == INVALID_CONFIG_ERR_MSG
+        assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG
 
         with raises(ConfigurationError) as e_info:
             merge_configs(12, 12)
-        assert e_info.value.args[0] == INVALID_CONFIG_ERR_MSG
+        assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG
 
     def test_conflicting_configs(self):
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': 'a'}, {'a': {'b': 'c'}})
-        assert e_info.value.args[0] == CONFIG_CONFLICT
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
 
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': {'b': 'c'}}, {'a': 'a'})
-        assert e_info.value.args[0] == CONFIG_CONFLICT
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
 
     def test_empty_both_configs(self):
         a = {}
