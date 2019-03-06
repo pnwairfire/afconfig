@@ -44,7 +44,7 @@ def config_parser_to_dict(config):
 
 GET_CONFIG_VALUE_ERR_MSG_NO_KEYS = "No config key(s) specified"
 GET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG = "Invalid config"
-GET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS = "Missing config key {}"
+GET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS = "Key {} not in config"
 def get_config_value(config, *keys, **kwargs):
     """Returns value from arbitrary nesting in config dict
 
@@ -52,7 +52,7 @@ def get_config_value(config, *keys, **kwargs):
      - default -- if not specified, None is used as the default
      - fail_on_missing_key -- raise exception if key isn't in config
      - fail_on_invalid_config -- raise exception if any of the keys up to
-          but not includeing the last point to something other than
+          but not including the last point to something other than
           None or a dict
 
     TODO:
@@ -76,15 +76,14 @@ def get_config_value(config, *keys, **kwargs):
             raise KeyError("Missing config key {}".format(keys[0]))
 
     else:  # config is a dict
-        if len(keys) == 1:
-            if keys[0] in config:
+        if keys[0] in config:
+            if len(keys) == 1:
                 return config[keys[0]]
-            elif not kwargs.get('fail_on_missing_key'):
-                return default
-            raise KeyError(GET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS.format(keys[0]))
+            else:
+                return get_config_value(config[keys[0]], *keys[1:], **kwargs)
 
-        elif keys[0] in config:
-            return get_config_value(config[keys[0]], *keys[1:], **kwargs)
+        elif kwargs.get('fail_on_missing_key'):
+            raise KeyError(GET_CONFIG_VALUE_ERR_MSG_MISSING_KEYS.format(keys[0]))
 
     return default
 

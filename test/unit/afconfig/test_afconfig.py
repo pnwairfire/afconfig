@@ -88,12 +88,23 @@ class TestGetConfigValue(object):
         with raises(KeyError) as e:
             get_config_value({}, 's', fail_on_missing_key=True, default=1)
 
+        # key before last not in config, so last one isn't as well
         with raises(KeyError) as e:
-            get_config_value(config, 'a', 'aa', 'foo',
-                fail_on_missing_key=True)
+            get_config_value(config, 'a', 'ac', 'foo', fail_on_missing_key=True)
         with raises(KeyError) as e:
-            get_config_value(config, 'a', 'aa', 'foo',
-                fail_on_missing_key=True, default=1)
+            get_config_value(config, 'a', 'ac', 'foo', fail_on_missing_key=True, default=1)
+
+        # last key not in config
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'az', fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'az', fail_on_missing_key=True, default=1)
+
+        # second to last key points to scalar, so last key not in config
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'aa', 'foo', fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'aa', 'foo', fail_on_missing_key=True, default=1)
 
         # fail_on_missing is ignored if value is there
         assert 12 == get_config_value(config, 'c',
@@ -133,6 +144,15 @@ class TestGetConfigValue(object):
         assert None == get_config_value(config, 's', fail_on_invalid_config=True)
         assert 1 == get_config_value(config, 's', fail_on_invalid_config=True, default=1)
 
+        # key before last not in config, so last one isn't as well
+        assert None == get_config_value(config, 'a', 'ac', 'foo', fail_on_invalid_config=True)
+        assert 1 == get_config_value(config, 'a', 'ac', 'foo', fail_on_invalid_config=True, default=1)
+
+        # last key not in config
+        assert None == get_config_value(config, 'a', 'az', fail_on_invalid_config=True)
+        assert 1 == get_config_value(config, 'a', 'az', fail_on_invalid_config=True, default=1)
+
+        # second to last key points to scalar, so last key not in config
         with raises(ConfigurationError) as e:
             get_config_value(config, 'a', 'aa', 'foo', fail_on_invalid_config=True)
         with raises(ConfigurationError) as e:
@@ -186,6 +206,19 @@ class TestGetConfigValue(object):
             get_config_value(config, 's', fail_on_missing_key=True,
                 fail_on_invalid_config=True, default=1)
 
+        # key before last not in config, so last one isn't as well
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'ac', 'foo', fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'ac', 'foo', fail_on_missing_key=True, default=1)
+
+        # last key not in config
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'az', fail_on_missing_key=True)
+        with raises(KeyError) as e:
+            get_config_value(config, 'a', 'az', fail_on_missing_key=True, default=1)
+
+        # second to last key points to scalar, so last key not in config
         with raises(ConfigurationError) as e:
             get_config_value(config, 'a', 'aa', 'foo',
                 fail_on_missing_key=True, fail_on_invalid_config=True)
