@@ -72,6 +72,8 @@ def get_config_value(config, *keys, **kwargs):
     elif not isinstance(config, dict):
         if kwargs.get('fail_on_invalid_config'):
             raise ConfigurationError(GET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG)
+        elif kwargs.get('fail_on_missing_key'):
+            raise KeyError("Missing config key {}".format(keys[0]))
 
     else:  # config is a dict
         if len(keys) == 1:
