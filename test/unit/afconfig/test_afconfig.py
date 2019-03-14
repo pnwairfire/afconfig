@@ -353,13 +353,22 @@ class TestMergeConfigs(object):
         assert e_info.value.args[0] == SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG
 
     def test_conflicting_configs(self):
+        # can't replace scalar with dict
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': 'a'}, {'a': {'b': 'c'}})
         assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
 
+        # can't replace dict with scalar
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': {'b': 'c'}}, {'a': 'a'})
         assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
+
+        # can't replace dict with None
+        with raises(ConfigurationError) as e_info:
+            merge_configs({'a': {'b': 'c'}}, {'a': None})
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
+
+        # Note: you *can* replace None with dict (see below)
 
     def test_empty_both_configs(self):
         a = {}
@@ -375,6 +384,11 @@ class TestMergeConfigs(object):
         a = {'a': 123}
         b = merge_configs(a, {})
         assert a == b == {'a': 123}
+
+    def test_allow_replace_none_with_dict(self):
+        a = {'a': None}
+        b = merge_configs(a, {'a': {'c': 3}})
+        assert a == b == {'a': {'c': 3}}
 
     def test_all(self):
         a = {'a': 123}

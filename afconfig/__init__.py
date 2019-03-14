@@ -112,7 +112,8 @@ def merge_configs(config, to_be_merged_config):
 
     # Merge in place
     for k, v in to_be_merged_config.items():
-        if k not in config or (
+        # Note: this allows None to be replaced by a dict, but not the converse
+        if config.get(k) is None or (
                 not isinstance(config[k], dict) and not isinstance(v, dict)):
             config[k] = v
         elif isinstance(config[k], dict) and isinstance(v, dict):
