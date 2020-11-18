@@ -356,19 +356,23 @@ class TestMergeConfigs(object):
         # can't replace scalar with dict
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': 'a'}, {'a': {'b': 'c'}})
-        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT.format('a')
 
         # can't replace dict with scalar
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': {'b': 'c'}}, {'a': 'a'})
-        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT.format('a')
 
         # can't replace dict with None
+        # Note: you *can* replace None with dict (see below)
         with raises(ConfigurationError) as e_info:
             merge_configs({'a': {'b': 'c'}}, {'a': None})
-        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT.format('a')
 
-        # Note: you *can* replace None with dict (see below)
+        # again, can't replace dict with None; testing log message
+        with raises(ConfigurationError) as e_info:
+            merge_configs({'zzz': {'a': {'b': 'c'}}}, {'zzz': {'a': None}})
+        assert e_info.value.args[0] == MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT.format('zzz > a')
 
     def test_empty_both_configs(self):
         a = {}

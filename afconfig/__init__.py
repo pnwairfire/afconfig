@@ -104,22 +104,25 @@ def set_config_value(config, value, *keys):
             config[keys[0]] = dict()
         set_config_value(config[keys[0]], value, *keys[1:])
 
-MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT = "Conflicting config dicts. Can't be merged."
+MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT = "Conflicting config dicts can't be merged. key: {}."
 
-def merge_configs(config, to_be_merged_config):
+def merge_configs(config, to_be_merged_config, *keys):
     if not isinstance(config, dict) or not isinstance(to_be_merged_config, dict):
         raise ConfigurationError(SET_CONFIG_VALUE_ERR_MSG_INVALID_CONFIG)
 
     # Merge in place
     for k, v in to_be_merged_config.items():
+        new_keys = keys + (k,)
+
         # Note: this allows None to be replaced by a dict, but not the converse
         if config.get(k) is None or (
                 not isinstance(config[k], dict) and not isinstance(v, dict)):
             config[k] = v
         elif isinstance(config[k], dict) and isinstance(v, dict):
-            merge_configs(config[k], v)
+
+            merge_configs(config[k], v, *new_keys)
         else:
-            raise ConfigurationError(MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT)
+            raise ConfigurationError(MERGE_CONFIGS_ERR_MSG_CONFIG_CONFLICT.format(' > '.join(new_keys)))
 
     # return reference to config, even though it was merged in place
     return config
